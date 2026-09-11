@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Database, 
   Upload, 
@@ -29,10 +29,13 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
   onUpdateState,
   onSelectNCBIDataset
 }) => {
+  const previewRef = useRef<HTMLDivElement | null>(null);
+
   const [showFormatGuide, setShowFormatGuide] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<boolean>(false);
   const [fileColumns, setFileColumns] = useState<string[]>([]);
   const [rawFileText, setRawFileText] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -47,12 +50,19 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
   const [previewPage, setPreviewPage] = useState<number>(0);
   const pageSize = 8;
 
+  const scrollToResults = () => {
+    setTimeout(() => {
+      previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setFileName(file.name);
     setUploadError(null);
+    setUploadSuccess(false);
 
     const reader = new FileReader();
     reader.onload = (evt) => {
@@ -72,6 +82,7 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
           setUploadError(parsed.error || 'Failed to parse file matrix format. Ensure header row contains gene symbols.');
         }
       } else if (parsed.samples && parsed.datasetMeta && parsed.genes) {
+        setUploadSuccess(true);
         onUpdateState({
           datasetMeta: parsed.datasetMeta,
           samples: parsed.samples,
@@ -85,6 +96,7 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
           sampleExplanations: {},
           pathways: []
         });
+        scrollToResults();
       }
     };
     reader.readAsText(file);
@@ -100,6 +112,7 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
 
     if (parsed.success && parsed.samples && parsed.datasetMeta && parsed.genes) {
       setUploadError(null);
+      setUploadSuccess(true);
       onUpdateState({
         datasetMeta: parsed.datasetMeta,
         samples: parsed.samples,
@@ -113,6 +126,7 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
         sampleExplanations: {},
         pathways: []
       });
+      scrollToResults();
     } else {
       setUploadError(parsed.error || 'Could not parse dataset with selected column mapping. Ensure numerical expression values.');
     }
@@ -189,7 +203,10 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
                 </div>
 
                 <button
-                  onClick={() => onSelectNCBIDataset(ds.meta.accessionId)}
+                  onClick={() => {
+                    setUploadSuccess(false);
+                    onSelectNCBIDataset(ds.meta.accessionId);
+                  }}
                   className={`w-full py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 ${
                     isActive
                       ? 'bg-[#0000FF] text-white shadow-sm'
@@ -211,10 +228,10 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
           <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-mono font-bold uppercase border border-indigo-200">
             Custom File Upload Option
           </span>
-          {state.isCustomDataset && (
-            <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1 font-mono">
-              <CheckCircle2 className="w-4 h-4" />
-              Active Custom Matrix
+          {(uploadSuccess || state.isCustomDataset) && (
+            <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1 font-mono bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              Uploaded &amp; Active
             </span>
           )}
         </div>
@@ -225,14 +242,46 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
         </div>
 
         {/* Upload Box */}
-        <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center bg-slate-50/50 hover:border-indigo-400 transition-colors">
-          <Upload className="w-6 h-6 text-indigo-600 mx-auto mb-1.5" />
-          <span className="text-xs font-semibold text-slate-800 block">Drop your CSV / TSV matrix file here</span>
-          <label className="mt-2.5 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold cursor-pointer transition-colors">
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Browse File</span>
-            <input type="file" accept=".csv,.tsv,.txt" onChange={handleFileUpload} className="hidden" />
-          </label>
+        <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-all ${
+          uploadSuccess || state.isCustomDataset
+            ? 'border-emerald-400 bg-emerald-50/40 ring-2 ring-emerald-400/20'
+            : 'border-slate-300 bg-slate-50/50 hover:border-indigo-400'
+        }`}>
+          {uploadSuccess || state.isCustomDataset ? (
+            <div className="space-y-3">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 ring-4 ring-emerald-50">
+                <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+              </div>
+              <div>
+                <div className="flex items-center justify-center gap-2 text-emerald-900 font-bold text-base">
+                  <span>✓ Uploaded</span>
+                  {(fileName || state.datasetMeta.name) && (
+                    <span className="font-mono text-xs text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded border border-emerald-200">
+                      {fileName || state.datasetMeta.name}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-emerald-700 font-medium mt-1">
+                  Expression matrix loaded ({state.samples.length} samples, {state.genes.length} features parsed).
+                </p>
+              </div>
+              <label className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-xs">
+                <Upload className="w-3.5 h-3.5" />
+                <span>Upload Another Matrix File</span>
+                <input type="file" accept=".csv,.tsv,.txt" onChange={handleFileUpload} className="hidden" />
+              </label>
+            </div>
+          ) : (
+            <>
+              <Upload className="w-7 h-7 text-indigo-600 mx-auto mb-2" />
+              <span className="text-xs font-semibold text-slate-800 block">Drop your CSV / TSV matrix file here</span>
+              <label className="mt-3 inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-xs">
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Browse &amp; Upload File</span>
+                <input type="file" accept=".csv,.tsv,.txt" onChange={handleFileUpload} className="hidden" />
+              </label>
+            </>
+          )}
         </div>
       </div>
 
@@ -248,7 +297,7 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
       )}
 
       {/* Dataset Matrix Preview Table */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <div ref={previewRef} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 scroll-mt-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2 font-mono text-xs font-bold text-slate-800">
             <Table className="w-4 h-4 text-cyan-600" />
