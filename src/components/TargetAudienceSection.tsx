@@ -21,24 +21,30 @@ export const TargetAudienceSection: React.FC = () => {
     {
       icon: GraduationCap,
       title: 'Students & Educators',
-      desc: 'Learn explainable AI concepts (SHAP) and pathway enrichment through interactive visual diagnostics.'
+      desc: 'Learn explainable AI concepts (SHAP) and pathway enrichment through interactive visual tools.'
     }
   ];
 
   return (
-    <section className="py-20 text-white px-4 sm:px-6 lg:px-8 border-b border-blue-800" style={{ backgroundColor: '#0000CD' }}>
+    <section
+      className="py-20 px-4 sm:px-6 lg:px-8 border-b"
+      style={{ backgroundColor: 'rgba(181, 199, 235, 0.2)', borderColor: '#B5C7EB', color: '#0f172a' }}
+    >
       <div className="max-w-5xl mx-auto space-y-12">
         <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-900/80 border border-yellow-300/40 text-yellow-300 text-xs font-mono">
-            <Heart className="w-3.5 h-3.5 fill-yellow-300" />
+          <div
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border font-semibold shadow-xs"
+            style={{ backgroundColor: '#ffffff', borderColor: '#B5C7EB', color: '#0000FF' }}
+          >
+            <Heart className="w-3.5 h-3.5 fill-[#0000FF] text-[#0000FF]" />
             <span>Built for Researchers</span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold leading-tight" style={{ color: '#0000FF' }}>
             Designed for Bench Scientists
           </h2>
 
-          <p className="text-base text-yellow-300 font-medium italic">
+          <p className="text-base font-medium italic text-slate-700">
             &ldquo;You shouldn&apos;t need to write Python to explore what a machine-learning model learned from your gene-expression data.&rdquo;
           </p>
         </div>
@@ -50,13 +56,17 @@ export const TargetAudienceSection: React.FC = () => {
             return (
               <div
                 key={item.title}
-                className="bg-blue-900/60 p-6 rounded-2xl border border-white/20 hover:border-yellow-300/60 transition-all duration-200 space-y-3"
+                className="p-6 rounded-2xl border bg-white transition-all duration-200 space-y-3 shadow-sm hover:shadow-md"
+                style={{ borderColor: '#B5C7EB' }}
               >
-                <div className="p-2.5 rounded-xl bg-blue-900 w-fit text-yellow-300 border border-white/20">
-                  <Icon className="w-5 h-5" />
+                <div
+                  className="p-2.5 rounded-xl w-fit border"
+                  style={{ backgroundColor: 'rgba(181, 199, 235, 0.4)', borderColor: '#B5C7EB', color: '#0000FF' }}
+                >
+                  <Icon className="w-5 h-5 text-[#0000FF]" />
                 </div>
-                <h3 className="text-base font-bold text-white">{item.title}</h3>
-                <p className="text-xs text-blue-100 leading-relaxed">{item.desc}</p>
+                <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
+                <p className="text-xs leading-relaxed text-slate-600 font-medium">{item.desc}</p>
               </div>
             );
           })}

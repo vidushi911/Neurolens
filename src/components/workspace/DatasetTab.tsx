@@ -5,26 +5,29 @@ import {
   CheckCircle2, 
   AlertCircle, 
   FileSpreadsheet, 
-  RefreshCw,
   HelpCircle,
   X,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Search,
+  ExternalLink,
+  Table,
+  Play
 } from 'lucide-react';
 import { AnalysisState } from '../../types';
 import { parseCustomGeneExpressionCSV } from '../../services/dataParser';
-import { GSE63063_META } from '../../data/gse63063Dataset';
+import { ALL_NCBI_DATASETS } from '../../data/ncbiDatasets';
 
 interface DatasetTabProps {
   state: AnalysisState;
   onUpdateState: (updates: Partial<AnalysisState>) => void;
-  onResetToDemo: () => void;
+  onSelectNCBIDataset: (accessionId: string) => void;
 }
 
 export const DatasetTab: React.FC<DatasetTabProps> = ({
   state,
   onUpdateState,
-  onResetToDemo
+  onSelectNCBIDataset
 }) => {
   const [showFormatGuide, setShowFormatGuide] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -37,6 +40,12 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
   const [selectedSampleCol, setSelectedSampleCol] = useState<string>('');
   const [selectedLabelCol, setSelectedLabelCol] = useState<string>('');
   const [adLabelVal, setAdLabelVal] = useState<string>('AD');
+
+  // Matrix Preview Controls
+  const [previewSearch, setPreviewSearch] = useState<string>('');
+  const [previewFilter, setPreviewFilter] = useState<'All' | 'AD' | 'Control'>('All');
+  const [previewPage, setPreviewPage] = useState<number>(0);
+  const pageSize = 8;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,10 +64,12 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
       if (!parsed.success) {
         if (parsed.columns && parsed.columns.length > 0) {
           setFileColumns(parsed.columns);
-          setUploadError(parsed.error || 'Please map the diagnosis/label column under advanced settings.');
+          setUploadError(
+            `Data format validation failed: ${parsed.error || 'Missing or unmapped diagnosis column'}. Please check line format or map columns below.`
+          );
           setShowAdvanced(true);
         } else {
-          setUploadError(parsed.error || 'Failed to parse file format.');
+          setUploadError(parsed.error || 'Failed to parse file matrix format. Ensure header row contains gene symbols.');
         }
       } else if (parsed.samples && parsed.datasetMeta && parsed.genes) {
         onUpdateState({
@@ -103,229 +114,230 @@ export const DatasetTab: React.FC<DatasetTabProps> = ({
         pathways: []
       });
     } else {
-      setUploadError(parsed.error || 'Could not parse dataset with selected column mapping.');
+      setUploadError(parsed.error || 'Could not parse dataset with selected column mapping. Ensure numerical expression values.');
     }
   };
+
+  // Preview samples filtering
+  const filteredSamples = state.samples.filter(s => {
+    const matchesFilter =
+      previewFilter === 'All' ||
+      (previewFilter === 'AD' && s.diagnosis === 'Alzheimer\'s Disease') ||
+      (previewFilter === 'Control' && s.diagnosis === 'Healthy Control');
+    const matchesSearch = s.sampleId.toLowerCase().includes(previewSearch.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  const paginatedSamples = filteredSamples.slice(previewPage * pageSize, (previewPage + 1) * pageSize);
+  const previewGenes = state.genes.slice(0, 8); // top 8 genes for tabular preview
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
       {/* Header */}
       <div className="border-b border-slate-200 pb-5">
-        <h1 className="text-2xl font-bold text-slate-900">Dataset Selection</h1>
+        <h1 className="text-2xl font-bold text-slate-900">NCBI Datasets &amp; Custom Matrix Selection</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Choose our verified public Alzheimer&apos;s dataset or upload your experimental gene expression matrix.
+          Select real NCBI GEO benchmark transcriptomics datasets or upload your experimental matrix.
         </p>
       </div>
 
-      {/* Two Primary Choice Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Choice 1: Use Example Dataset */}
-        <div
-          className={`bg-white p-6 rounded-2xl border-2 transition-all space-y-5 shadow-sm ${
-            !state.isCustomDataset
-              ? 'border-cyan-500 ring-2 ring-cyan-500/10'
-              : 'border-slate-200 hover:border-slate-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="px-2.5 py-1 rounded-full bg-cyan-50 text-cyan-700 text-[10px] font-mono font-bold uppercase border border-cyan-200">
-              Option A: Benchmark Data
-            </span>
-            {!state.isCustomDataset && (
-              <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4" />
-                Active Dataset
-              </span>
-            )}
-          </div>
+      {/* NCBI GEO Dataset Selection Suite */}
+      <div className="space-y-4">
+        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <Database className="w-4 h-4 text-[#0000FF]" />
+          <span>NCBI GEO Benchmark Datasets Suite</span>
+        </h3>
 
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">Alzheimer&apos;s Disease Benchmark Dataset</h3>
-            <p className="text-xs text-slate-500 mt-1 font-mono">GEO Accession: {GSE63063_META.accessionId}</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Object.values(ALL_NCBI_DATASETS).map(ds => {
+            const isActive = !state.isCustomDataset && state.datasetMeta.accessionId === ds.meta.accessionId;
+            return (
+              <div
+                key={ds.meta.accessionId}
+                className={`p-5 rounded-2xl border-2 transition-all flex flex-col justify-between space-y-4 shadow-xs ${
+                  isActive
+                    ? 'border-[#0000FF] bg-blue-50/40 ring-2 ring-[#0000FF]/20'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#B5C7EB]/40 text-[#0000FF] border border-[#B5C7EB]">
+                      {ds.meta.accessionId}
+                    </span>
+                    {isActive && (
+                      <span className="text-[11px] text-emerald-600 font-mono font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Active
+                      </span>
+                    )}
+                  </div>
 
-          <div className="space-y-2 text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl font-mono">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Samples:</span>
-              <span className="font-bold text-slate-900">{GSE63063_META.sampleCount} (50 AD / 50 Control)</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Gene Features:</span>
-              <span className="font-bold text-slate-900">{GSE63063_META.geneCount} Genes</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Organism &amp; Tissue:</span>
-              <span className="font-bold text-slate-900">{GSE63063_META.organism}</span>
-            </div>
-          </div>
+                  <h4 className="text-sm font-bold text-slate-900 leading-snug">{ds.meta.name}</h4>
+                  <p className="text-[11px] text-slate-500">{ds.meta.tissueType}</p>
+                </div>
 
-          <button
-            onClick={onResetToDemo}
-            className="w-full py-3 bg-navy-950 hover:bg-navy-850 text-white font-bold text-xs rounded-xl transition-colors shadow-sm"
-          >
-            Use this dataset
-          </button>
-        </div>
+                <div className="space-y-1.5 text-[11px] font-mono text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Samples:</span>
+                    <strong className="text-slate-900">{ds.meta.sampleCount} ({ds.meta.adCount} AD / {ds.meta.controlCount} Ctrl)</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Tissue:</span>
+                    <strong className="text-slate-900">{ds.meta.organism.includes('Human') ? 'Human Tissue' : 'Human'}</strong>
+                  </div>
+                </div>
 
-        {/* Choice 2: Upload Your Own */}
-        <div
-          className={`bg-white p-6 rounded-2xl border-2 transition-all space-y-5 shadow-sm ${
-            state.isCustomDataset
-              ? 'border-indigo-500 ring-2 ring-indigo-500/10'
-              : 'border-slate-200 hover:border-slate-300'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-mono font-bold uppercase border border-indigo-200">
-              Option B: Custom File
-            </span>
-            {state.isCustomDataset && (
-              <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4" />
-                Active Dataset
-              </span>
-            )}
-          </div>
-
-          <div>
-            <h3 className="text-lg font-bold text-slate-900">Upload Your Own Gene-Expression File</h3>
-            <p className="text-xs text-slate-500 mt-1">Supports CSV or TSV normalized expression matrices.</p>
-          </div>
-
-          {/* Upload Drop Zone */}
-          <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center bg-slate-50/50 hover:border-indigo-400 transition-colors">
-            <Upload className="w-6 h-6 text-indigo-600 mx-auto mb-1.5" />
-            <span className="text-xs font-semibold text-slate-800 block">Drop your CSV / TSV file here</span>
-            <label className="mt-2.5 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold cursor-pointer transition-colors">
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Browse File</span>
-              <input type="file" accept=".csv,.tsv,.txt" onChange={handleFileUpload} className="hidden" />
-            </label>
-          </div>
-
-          {/* Format Help Button */}
-          <div className="text-center pt-1">
-            <button
-              onClick={() => setShowFormatGuide(true)}
-              className="text-xs text-cyan-600 hover:text-cyan-800 font-medium inline-flex items-center gap-1"
-            >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>Not sure about the format?</span>
-            </button>
-          </div>
+                <button
+                  onClick={() => onSelectNCBIDataset(ds.meta.accessionId)}
+                  className={`w-full py-2.5 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5 ${
+                    isActive
+                      ? 'bg-[#0000FF] text-white shadow-sm'
+                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Train Model on {ds.meta.accessionId}</span>
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Validation Alert */}
+      {/* Option B: Custom Matrix File Upload */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-mono font-bold uppercase border border-indigo-200">
+            Custom File Upload Option
+          </span>
+          {state.isCustomDataset && (
+            <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1 font-mono">
+              <CheckCircle2 className="w-4 h-4" />
+              Active Custom Matrix
+            </span>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-base font-bold text-slate-900">Upload Your Own Gene-Expression Matrix</h3>
+          <p className="text-xs text-slate-500 mt-1">Upload normalized CSV/TSV expression matrix to train XGBoost.</p>
+        </div>
+
+        {/* Upload Box */}
+        <div className="border-2 border-dashed border-slate-300 rounded-xl p-5 text-center bg-slate-50/50 hover:border-indigo-400 transition-colors">
+          <Upload className="w-6 h-6 text-indigo-600 mx-auto mb-1.5" />
+          <span className="text-xs font-semibold text-slate-800 block">Drop your CSV / TSV matrix file here</span>
+          <label className="mt-2.5 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold cursor-pointer transition-colors">
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Browse File</span>
+            <input type="file" accept=".csv,.tsv,.txt" onChange={handleFileUpload} className="hidden" />
+          </label>
+        </div>
+      </div>
+
+      {/* Actionable Error Message */}
       {uploadError && (
-        <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-start gap-3 text-rose-900 text-xs">
-          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-          <div>
-            <strong className="font-semibold text-rose-950">Data Validation Issue:</strong> {uploadError}
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl space-y-2 text-rose-900 text-xs animate-fade-in">
+          <div className="flex items-center gap-2 font-bold text-rose-950">
+            <AlertCircle className="w-4 h-4 text-rose-600" />
+            <span>File Parsing &amp; Validation Error</span>
           </div>
+          <p className="font-mono text-[11px] leading-relaxed text-rose-800">{uploadError}</p>
         </div>
       )}
 
-      {/* Expandable Technical Details Section */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <button
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="w-full p-4 flex items-center justify-between bg-slate-50 hover:bg-slate-100 transition-colors text-xs font-bold text-slate-800"
-        >
-          <span>Technical details &amp; Column Mapping</span>
-          {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+      {/* Dataset Matrix Preview Table */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2 font-mono text-xs font-bold text-slate-800">
+            <Table className="w-4 h-4 text-cyan-600" />
+            <span>Active Expression Matrix Preview ({state.samples.length} Samples, {state.genes.length} Features)</span>
+          </div>
 
-        {showAdvanced && (
-          <div className="p-6 border-t border-slate-100 space-y-4 text-xs">
-            <p className="text-slate-600">Map specific column names if auto-detection was uncertain:</p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[10px] font-mono uppercase text-slate-500 mb-1">
-                  Sample ID Column
-                </label>
-                <select
-                  value={selectedSampleCol}
-                  onChange={(e) => setSelectedSampleCol(e.target.value)}
-                  className="w-full text-xs p-2 border border-slate-300 rounded bg-white font-mono"
-                >
-                  <option value="">Auto Detect</option>
-                  {fileColumns.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-mono uppercase text-slate-500 mb-1">
-                  Diagnosis Label Column
-                </label>
-                <select
-                  value={selectedLabelCol}
-                  onChange={(e) => setSelectedLabelCol(e.target.value)}
-                  className="w-full text-xs p-2 border border-slate-300 rounded bg-white font-mono"
-                >
-                  <option value="">Select Column...</option>
-                  {fileColumns.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] font-mono uppercase text-slate-500 mb-1">
-                  AD Label String
-                </label>
-                <input
-                  type="text"
-                  value={adLabelVal}
-                  onChange={(e) => setAdLabelVal(e.target.value)}
-                  placeholder="e.g. AD or Case or 1"
-                  className="w-full text-xs p-2 border border-slate-300 rounded bg-white font-mono"
-                />
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search sample ID..."
+                value={previewSearch}
+                onChange={(e) => { setPreviewSearch(e.target.value); setPreviewPage(0); }}
+                className="text-xs pl-8 pr-3 py-1 border border-slate-200 rounded-lg font-mono focus:outline-none focus:border-cyan-500"
+              />
             </div>
 
-            <button
-              onClick={handleApplyMapping}
-              className="px-4 py-2 bg-navy-950 text-white rounded-lg text-xs font-bold hover:bg-navy-850"
+            <select
+              value={previewFilter}
+              onChange={(e) => { setPreviewFilter(e.target.value as any); setPreviewPage(0); }}
+              className="text-xs p-1 border border-slate-200 rounded-lg font-mono bg-white"
             >
-              Apply Column Mapping
+              <option value="All">All Groups</option>
+              <option value="AD">AD Profile</option>
+              <option value="Control">Control Profile</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Matrix Table */}
+        <div className="border border-slate-200 rounded-xl overflow-x-auto">
+          <table className="w-full text-left font-mono text-xs border-collapse">
+            <thead className="bg-slate-50 text-slate-600 text-[10px] uppercase border-b border-slate-200">
+              <tr>
+                <th className="p-2.5">Sample ID</th>
+                <th className="p-2.5">Group Signature</th>
+                {previewGenes.map(g => (
+                  <th key={g} className="p-2.5 text-center">{g}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {paginatedSamples.map(s => (
+                <tr key={s.sampleId} className="hover:bg-slate-50">
+                  <td className="p-2.5 font-bold text-slate-900">{s.sampleId}</td>
+                  <td className="p-2.5">
+                    <span
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                        s.diagnosis === 'Alzheimer\'s Disease'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}
+                    >
+                      {s.diagnosis === 'Alzheimer\'s Disease' ? 'AD-associated' : 'Control'}
+                    </span>
+                  </td>
+                  {previewGenes.map(g => (
+                    <td key={g} className="p-2.5 text-center font-mono text-slate-700">
+                      {(s.expressions[g] ?? 7.0).toFixed(2)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination bar */}
+        <div className="flex justify-between items-center text-xs font-mono text-slate-500 pt-1">
+          <span>Showing {paginatedSamples.length} of {filteredSamples.length} samples</span>
+          <div className="flex gap-2">
+            <button
+              disabled={previewPage === 0}
+              onClick={() => setPreviewPage(p => Math.max(0, p - 1))}
+              className="px-3 py-1 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-50 font-bold"
+            >
+              Previous
+            </button>
+            <button
+              disabled={(previewPage + 1) * pageSize >= filteredSamples.length}
+              onClick={() => setPreviewPage(p => p + 1)}
+              className="px-3 py-1 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-50 font-bold"
+            >
+              Next
             </button>
           </div>
-        )}
+        </div>
       </div>
-
-      {/* Format Guide Modal */}
-      {showFormatGuide && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy-950/70 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-bold text-slate-900">Expected File Format Example</h3>
-              <button onClick={() => setShowFormatGuide(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-600">
-              Provide a comma-separated (CSV) or tab-separated (TSV) matrix where rows are samples and columns are gene symbols (or vice versa):
-            </p>
-
-            {/* Code format preview box */}
-            <div className="p-3 bg-slate-900 text-slate-200 rounded-xl font-mono text-[11px] overflow-x-auto space-y-1">
-              <div className="text-cyan-400">Sample_ID, Diagnosis, APOE, APP, PSEN1, MAPT</div>
-              <div>GSM101, AD, 10.4, 9.8, 8.9, 9.5</div>
-              <div>GSM102, AD, 10.1, 9.5, 8.7, 9.2</div>
-              <div>GSM201, Healthy, 7.2, 7.1, 6.8, 7.4</div>
-              <div>GSM202, Healthy, 7.0, 6.9, 6.5, 7.1</div>
-            </div>
-
-            <button
-              onClick={() => setShowFormatGuide(false)}
-              className="w-full py-2.5 bg-navy-950 text-white font-bold text-xs rounded-xl"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

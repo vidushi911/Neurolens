@@ -9,7 +9,7 @@ import {
   ChevronRight,
   Info,
   Layers,
-  ArrowRight
+  Search
 } from 'lucide-react';
 import { AnalysisState, EnrichrPathway } from '../../types';
 import { runEnrichrPathwayAnalysis } from '../../services/enrichrService';
@@ -36,6 +36,7 @@ export const PathwaysTab: React.FC<PathwaysTabProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedPathway, setSelectedPathway] = useState<EnrichrPathway | null>(state.pathways[0] || null);
   const [showStats, setShowStats] = useState<boolean>(false);
+  const [pathwaySearch, setPathwaySearch] = useState<string>('');
 
   const activeGenes = myPathwayGenes.length > 0
     ? myPathwayGenes
@@ -67,16 +68,21 @@ export const PathwaysTab: React.FC<PathwaysTabProps> = ({
     }
   }, []);
 
+  const filteredPathways = state.pathways.filter(p =>
+    p.pathwayName.toLowerCase().includes(pathwaySearch.toLowerCase()) ||
+    p.overlappingGenes.some(g => g.toLowerCase().includes(pathwaySearch.toLowerCase()))
+  );
+
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
       {/* Header */}
       <div className="border-b border-slate-200 pb-5">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-slate-900">What biology is hiding in these genes?</h1>
+          <h1 className="text-2xl font-bold text-slate-900">What biological pathways are enriched in these genes?</h1>
           <HelpTooltip term="pathway" />
         </div>
         <p className="text-xs text-slate-500 mt-1">
-          We query top model-driving genes against established biological pathway databases (KEGG, Reactome, GO).
+          Top SHAP model-driving genes are mapped against KEGG, Reactome, and GO biological processes using Enrichr Fisher&apos;s exact test.
         </p>
       </div>
 
@@ -93,10 +99,10 @@ export const PathwaysTab: React.FC<PathwaysTabProps> = ({
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Database className="w-4 h-4 text-emerald-600" />
-              <span>Pathway Query Configuration</span>
+              <span>Enrichr Biological Pathway Query</span>
             </h3>
             <p className="text-xs text-slate-500">
-              Evaluating {activeGenes.length} genes against {selectedDb}.
+              Evaluating {activeGenes.length} biomarker genes against {selectedDb}.
             </p>
           </div>
 
@@ -163,10 +169,22 @@ export const PathwaysTab: React.FC<PathwaysTabProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Left Cards List */}
           <div className="md:col-span-2 space-y-3">
-            <h3 className="text-sm font-bold text-slate-900">Enriched Pathways Overview</h3>
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-bold text-slate-900">Enriched Pathways Overview</h3>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search pathway or gene..."
+                  value={pathwaySearch}
+                  onChange={(e) => setPathwaySearch(e.target.value)}
+                  className="text-xs pl-8 pr-3 py-1 border border-slate-200 rounded-lg font-mono focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
 
             <div className="space-y-3">
-              {state.pathways.map((path) => {
+              {filteredPathways.map((path) => {
                 const isSelected = selectedPathway?.pathwayName === path.pathwayName;
                 return (
                   <div
@@ -206,20 +224,20 @@ export const PathwaysTab: React.FC<PathwaysTabProps> = ({
           {/* Right Pathway Detail View */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 self-start sticky top-[80px]">
             <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-              Pathway Detail View
+              Pathway Detail Inspector
             </h3>
 
             {selectedPathway ? (
               <div className="space-y-5 text-xs">
                 <div>
-                  <span className="text-[10px] font-mono uppercase text-slate-400 block">Pathway Name</span>
+                  <span className="text-[10px] font-mono uppercase text-slate-400 block">Enriched Biological Pathway</span>
                   <h4 className="font-bold text-slate-900 text-sm">{selectedPathway.pathwayName}</h4>
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <strong className="text-[10px] font-mono uppercase text-slate-400 block">Why did this appear?</strong>
+                  <strong className="text-[10px] font-mono uppercase text-slate-400 block">Biological Interpretation</strong>
                   <p className="text-slate-700 leading-relaxed">
-                    Several genes that strongly influenced the model are also associated with this biological process.
+                    Multiple top SHAP-weighted biomarker genes converge on this specific cascade (microglial phagocytosis, amyloid-beta processing, or neuroinflammatory response).
                   </p>
                 </div>
 
@@ -243,16 +261,16 @@ export const PathwaysTab: React.FC<PathwaysTabProps> = ({
                 <div className="pt-2">
                   <button
                     onClick={() => setShowStats(!showStats)}
-                    className="text-[11px] text-slate-500 hover:text-slate-800 font-medium inline-flex items-center gap-1"
+                    className="text-[11px] text-slate-500 hover:text-slate-800 font-medium inline-flex items-center gap-1 font-mono"
                   >
-                    <span>{showStats ? 'Hide detailed statistics' : 'Show detailed statistics'}</span>
+                    <span>{showStats ? 'Hide Fisher exact test stats' : 'Show Fisher exact test stats'}</span>
                     {showStats ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                   </button>
 
                   {showStats && (
                     <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 font-mono text-[10px] space-y-1 mt-2">
                       <div>Raw P-value: {selectedPathway.pValue.toExponential(3)}</div>
-                      <div>Adjusted P-value (FDR): {selectedPathway.adjustedPValue.toExponential(3)}</div>
+                      <div>FDR Adjusted P-value: {selectedPathway.adjustedPValue.toExponential(3)}</div>
                       <div>Combined Score: {selectedPathway.combinedScore}</div>
                       <div>Total Pathway Genes: {selectedPathway.totalPathwayGenes}</div>
                     </div>

@@ -4,27 +4,77 @@
 
 @layer base {
   :root {
-    --color-royal-blue: #0000cd;
+    --color-landing-bg: #FFFAFA;
+    --color-landing-accent: #B5C7EB;
+    --color-landing-[#0000FF]: #0000FF;
     --color-bg-workspace: #f8fafc;
   }
 
   body {
-    background-color: #0000cd;
-    color: #ffffff;
-    font-family: 'Gwen', 'Gwen Variable', 'Playfair Display', Georgia, serif;
+    background-color: #FFFAFA;
+    color: #0f172a;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
   }
 
-  /* Gwen Variable Font Utility */
   .font-gwen {
     font-family: 'Gwen', 'Gwen Variable', 'Playfair Display', Georgia, serif;
   }
 
-  /* Scientific Monospace Numbers */
   .font-mono-num {
     font-family: 'JetBrains Mono', monospace;
     font-variant-numeric: tabular-nums;
   }
+}
+
+/* Landing Page Three-Color System (#FFFAFA, #B5C7EB, #0000FF) */
+.bg-landing-light {
+  background-color: #FFFAFA !important;
+}
+
+.bg-landing-periwinkle {
+  background-color: #B5C7EB !important;
+}
+
+.bg-landing-royal {
+  background-color: #0000FF !important;
+}
+
+.text-royal {
+  color: #0000FF !important;
+}
+
+.text-[#B5C7EB] {
+  color: #3b5998 !important;
+}
+
+.border-royal {
+  border-color: rgba(0, 0, 255, 0.3) !important;
+}
+
+.border-periwinkle {
+  border-color: #B5C7EB !important;
+}
+
+/* Three-Color Hero Card System */
+.landing-card-light {
+  background-color: #ffffff;
+  border: 2px solid #B5C7EB;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 255, 0.08);
+  border-radius: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-card-light:hover {
+  border-color: #0000FF;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 255, 0.15);
+}
+
+.landing-card-periwinkle {
+  background-color: rgba(181, 199, 235, 0.35);
+  border: 1px solid #B5C7EB;
+  border-radius: 1.25rem;
 }
 
 /* Custom Scrollbar for Scientific Tables & Workspace */
@@ -34,30 +84,40 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 205, 0.2);
+  background: rgba(181, 199, 235, 0.2);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.4);
+  background: #0000FF;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.8);
+  background: #00008B;
 }
 
-/* Cute hand-drawn grid background */
-.doodle-grid-pattern {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.25) 1.5px, transparent 1.5px);
+/* Cute hand-drawn grid background on bright light background */
+.doodle-grid-pattern-light {
+  background-image: radial-gradient(rgba(0, 0, 255, 0.12) 1.5px, transparent 1.5px);
   background-size: 28px 28px;
 }
 
-/* Pulse animation */
-@keyframes microPulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.15); }
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-micro-pulse {
-  animation: microPulse 4s ease-in-out infinite;
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Heatmap Grid Cell Hover Tooltip */
+.heatmap-cell {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.heatmap-cell:hover {
+  transform: scale(1.2);
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }

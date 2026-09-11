@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnalysisState } from './types';
-import { generateGSE63063Samples, GSE63063_GENES, GSE63063_META } from './data/gse63063Dataset';
+import { ALL_NCBI_DATASETS, GSE63063_DATASET } from './data/ncbiDatasets';
 import { trainXGBoostModel } from './services/xgboostEngine';
 import { calculateSHAPValues } from './services/shapEngine';
 import { runEnrichrPathwayAnalysis } from './services/enrichrService';
 
+import { ScientificDisclaimerBanner } from './components/ScientificDisclaimerBanner';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { WorkflowSection } from './components/WorkflowSection';
@@ -22,6 +23,7 @@ import { DownloadTab } from './components/workspace/DownloadTab';
 
 import { GeneExplorerModal } from './components/modals/GeneExplorerModal';
 import { SampleInspectorModal } from './components/modals/SampleInspectorModal';
+import { SampleComparisonModal } from './components/modals/SampleComparisonModal';
 
 export function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'workspace'>('landing');
@@ -29,21 +31,45 @@ export function App() {
   const [collapsedNav, setCollapsedNav] = useState<boolean>(false);
   const [myPathwayGenes, setMyPathwayGenes] = useState<string[]>([]);
 
-  // Selected Inspect Items
+  // Selected Inspect & Compare Items
   const [inspectedGene, setInspectedGene] = useState<string | null>(null);
   const [inspectedSampleId, setInspectedSampleId] = useState<string | null>(null);
+  const [isSampleComparisonOpen, setIsSampleComparisonOpen] = useState<boolean>(false);
+
+  // Initialize History State for Browser Back Button navigation
+  useEffect(() => {
+    window.history.replaceState({ view: 'landing' }, '');
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.view) {
+        setCurrentView(event.state.view);
+      } else {
+        setCurrentView('landing');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleNavigateView = (view: 'landing' | 'workspace') => {
+    if (view !== currentView) {
+      window.history.pushState({ view }, '');
+      setCurrentView(view);
+    }
+  };
 
   // Initialize dataset & ML state
   const [state, setState] = useState<AnalysisState>(() => {
-    const samples = generateGSE63063Samples();
-    const genes = GSE63063_GENES;
+    const ds = GSE63063_DATASET;
+    const samples = ds.generateSamples();
+    const genes = ds.genes;
 
-    // Run baseline XGBoost & SHAP computation
     const metrics = trainXGBoostModel(samples, genes);
     const { globalShap, sampleExplanations } = calculateSHAPValues(samples, genes);
 
     return {
-      datasetMeta: GSE63063_META,
+      datasetMeta: ds.meta,
       samples,
       genes,
       isCustomDataset: false,
@@ -84,72 +110,83 @@ export function App() {
     setState(prev => ({ ...prev, ...updates }));
   };
 
-  const handleTryExampleDataset = () => {
-    const samples = generateGSE63063Samples();
-    const genes = GSE63063_GENES;
+  // Train ML model dynamically on any selected NCBI GEO dataset
+  const handleSelectNCBIDataset = (accessionId: string) => {
+    const ds = ALL_NCBI_DATASETS[accessionId] || GSE63063_DATASET;
+    const samples = ds.generateSamples();
+    const genes = ds.genes;
+
     const metrics = trainXGBoostModel(samples, genes);
     const { globalShap, sampleExplanations } = calculateSHAPValues(samples, genes);
 
-    setState({
-      datasetMeta: GSE63063_META,
-      samples,
-      genes,
-      isCustomDataset: false,
-      preprocessingStatus: 'complete',
-      classificationStatus: 'complete',
-      shapStatus: 'complete',
-      enrichrStatus: 'complete',
-      metrics,
-      globalShap,
-      sampleExplanations,
-      pathways: state.pathways,
-      topShapCount: 25,
-      selectedDatabase: 'KEGG 2021 Human',
-      selectedGene: null,
-      selectedSampleId: null
+    const topGenes = globalShap.slice(0, 25).map(g => g.geneSymbol);
+    runEnrichrPathwayAnalysis(topGenes, 'KEGG 2021 Human').then(pathways => {
+      setState({
+        datasetMeta: ds.meta,
+        samples,
+        genes,
+        isCustomDataset: false,
+        preprocessingStatus: 'complete',
+        classificationStatus: 'complete',
+        shapStatus: 'complete',
+        enrichrStatus: 'complete',
+        metrics,
+        globalShap,
+        sampleExplanations,
+        pathways,
+        topShapCount: 25,
+        selectedDatabase: 'KEGG 2021 Human',
+        selectedGene: null,
+        selectedSampleId: null
+      });
     });
-
-    setCurrentView('workspace');
-    setActiveTab('overview');
   };
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
-  const handleExploreWorkflowScroll = () => {
-    setCurrentView('workspace');
-    if (workspaceRef.current) {
-      workspaceRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-cyan-500 selection:text-white">
+    <div className="min-h-screen flex flex-col font-sans selection:bg-[#B5C7EB] selection:text-[#0000FF]">
+      {/* Research Use Only Persistent Disclaimer Banner */}
+      <ScientificDisclaimerBanner />
+
       {/* Top Navbar */}
       <Navbar
         currentView={currentView}
-        setCurrentView={setCurrentView}
-        onTryExampleDataset={handleTryExampleDataset}
+        setCurrentView={(v) => handleNavigateView(v)}
+        onSelectNCBIDataset={handleSelectNCBIDataset}
         state={state}
       />
 
       {/* LANDING PAGE VIEW */}
       {currentView === 'landing' && (
-        <main className="flex-1 text-white" style={{ backgroundColor: '#0000CD' }}>
+        <main className="flex-1">
+          {/* Top Hero Section: Royal Blue with spotlight lens animation */}
           <HeroSection />
+
+          {/* As user scrolls down: Lighter backgrounds for high legibility & readability */}
           <WorkflowSection />
           <WhyExistsSection />
           <TargetAudienceSection />
 
-          {/* Continuous Transition CTA */}
-          <section className="py-20 text-center px-4 transition-all duration-700 border-t border-blue-800" style={{ backgroundColor: '#0000CD' }}>
+          {/* Bottom Transition CTA */}
+          <section
+            className="py-20 text-center px-4 border-t shadow-xs"
+            style={{ backgroundColor: '#f8fafc', borderColor: '#B5C7EB' }}
+          >
             <div className="max-w-2xl mx-auto space-y-6">
-              <h2 className="text-3xl font-bold text-white">Understand your Alzheimer&apos;s models.</h2>
-              <p className="text-sm text-blue-100">
-                Launch the research studio with our built-in NCBI GEO dataset or drop in your experimental gene expression matrix.
+              <h2 className="text-3xl font-bold font-gwen text-[#0000FF]">
+                Understand your Alzheimer&apos;s models.
+              </h2>
+              <p className="text-sm font-gwen text-slate-600 font-medium">
+                Launch the research studio with real NCBI GEO datasets (GSE63063, GSE1297, GSE5281) or drop in your experimental matrix.
               </p>
               <button
-                onClick={handleTryExampleDataset}
-                className="px-8 py-4 bg-yellow-300 hover:bg-yellow-200 text-blue-950 font-bold rounded-2xl text-sm shadow-xl shadow-yellow-300/20 transition-all transform hover:scale-[1.02]"
+                onClick={() => {
+                  handleSelectNCBIDataset(state.datasetMeta.accessionId);
+                  handleNavigateView('workspace');
+                }}
+                className="px-8 py-4 font-bold rounded-2xl text-sm shadow-lg transition-all transform hover:scale-[1.02] text-white"
+                style={{ backgroundColor: '#0000FF' }}
               >
                 Launch Research Studio →
               </button>
@@ -160,7 +197,7 @@ export function App() {
 
       {/* SINGLE CONTINUOUS WORKSPACE VIEW */}
       {currentView === 'workspace' && (
-        <div ref={workspaceRef} className="flex-1 flex bg-slate-50 text-slate-900 min-h-[calc(100vh-57px)]">
+        <div ref={workspaceRef} className="flex-1 flex bg-slate-50 text-slate-900 min-h-[calc(100vh-87px)]">
           {/* 7-Tab Persistent Left Navigation */}
           <WorkspaceNav
             activeTab={activeTab}
@@ -168,7 +205,7 @@ export function App() {
             collapsed={collapsedNav}
             setCollapsed={setCollapsedNav}
             state={state}
-            onBackToLanding={() => setCurrentView('landing')}
+            onBackToLanding={() => handleNavigateView('landing')}
           />
 
           {/* Continuous Workspace Panel */}
@@ -185,7 +222,7 @@ export function App() {
               <DatasetTab
                 state={state}
                 onUpdateState={handleUpdateState}
-                onResetToDemo={handleTryExampleDataset}
+                onSelectNCBIDataset={handleSelectNCBIDataset}
               />
             )}
 
@@ -195,6 +232,7 @@ export function App() {
                 onUpdateState={handleUpdateState}
                 setActiveTab={setActiveTab}
                 onOpenSampleInspector={(sampleId) => setInspectedSampleId(sampleId)}
+                onOpenSampleComparison={() => setIsSampleComparisonOpen(true)}
               />
             )}
 
@@ -219,8 +257,9 @@ export function App() {
             {activeTab === 'results' && (
               <ResultsTab
                 state={state}
-                onResetAnalysis={handleTryExampleDataset}
+                onResetAnalysis={() => handleSelectNCBIDataset('GSE63063')}
                 setActiveTab={setActiveTab}
+                onOpenGeneModal={(symbol) => setInspectedGene(symbol)}
               />
             )}
 
@@ -241,6 +280,13 @@ export function App() {
       <SampleInspectorModal
         sampleId={inspectedSampleId}
         onClose={() => setInspectedSampleId(null)}
+        state={state}
+        onOpenGeneModal={(symbol) => setInspectedGene(symbol)}
+      />
+
+      <SampleComparisonModal
+        isOpen={isSampleComparisonOpen}
+        onClose={() => setIsSampleComparisonOpen(false)}
         state={state}
         onOpenGeneModal={(symbol) => setInspectedGene(symbol)}
       />

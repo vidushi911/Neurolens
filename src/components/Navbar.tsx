@@ -1,45 +1,82 @@
 import React from 'react';
 import { Dna, Play, LayoutDashboard, Database, ArrowRight } from 'lucide-react';
 import { AnalysisState } from '../types';
+import { ALL_NCBI_DATASETS } from '../data/ncbiDatasets';
 
 interface NavbarProps {
   currentView: 'landing' | 'workspace';
   setCurrentView: (view: 'landing' | 'workspace') => void;
-  onTryExampleDataset: () => void;
+  onSelectNCBIDataset: (accessionId: string) => void;
   state: AnalysisState;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentView,
   setCurrentView,
-  onTryExampleDataset,
+  onSelectNCBIDataset,
   state
 }) => {
+  const handleNavigate = (view: 'landing' | 'workspace') => {
+    if (view === 'workspace' && currentView === 'landing') {
+      window.history.pushState({ view: 'workspace' }, '');
+    } else if (view === 'landing' && currentView === 'workspace') {
+      window.history.pushState({ view: 'landing' }, '');
+    }
+    setCurrentView(view);
+  };
+
   return (
     <header
-      className="sticky top-0 z-40 backdrop-blur-md border-b border-blue-800 text-white px-4 sm:px-6 lg:px-8 py-3 transition-colors"
-      style={{ backgroundColor: '#0000CD' }}
+      className="sticky top-0 z-40 backdrop-blur-md px-4 sm:px-6 lg:px-8 py-3 transition-colors border-b text-white shadow-md"
+      style={{
+        backgroundColor: currentView === 'landing' ? '#0000FF' : '#0f172a',
+        borderColor: currentView === 'landing' ? 'rgba(181, 199, 235, 0.3)' : '#1e293b'
+      }}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Brand */}
+        {/* Brand Logo & RUO Tag */}
         <div
-          onClick={() => setCurrentView('landing')}
-          className="flex items-center gap-2.5 cursor-pointer group"
+          onClick={() => handleNavigate('landing')}
+          className="flex items-center gap-3 cursor-pointer group"
         >
-          <div className="p-2 rounded-xl bg-blue-900 border border-white/30 text-yellow-300 group-hover:border-yellow-300 transition-colors">
-            <Dna className="w-4 h-4" />
+          <div
+            className="p-2 rounded-xl border transition-colors shadow-sm"
+            style={{ backgroundColor: 'rgba(181, 199, 235, 0.2)', borderColor: '#B5C7EB', color: '#FFFAFA' }}
+          >
+            <Dna className="w-4 h-4 text-cyan-300" />
           </div>
           <div>
-            <span className="text-base font-bold text-white tracking-tight block leading-none">NeuroLens</span>
-            <span className="text-[10px] text-blue-200 font-mono">Research Studio</span>
+            <div className="flex items-center gap-2">
+              <span className="text-base font-bold tracking-tight block leading-none text-white">NeuroLens</span>
+              <span
+                className="px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border"
+                style={{ backgroundColor: 'rgba(181, 199, 235, 0.25)', borderColor: '#B5C7EB', color: '#B5C7EB' }}
+              >
+                RUO Prototype
+              </span>
+            </div>
+            <span className="text-[10px] font-mono" style={{ color: '#B5C7EB' }}>
+              NCBI Dataset ML Trainer
+            </span>
           </div>
         </div>
 
-        {/* Center Pill: Active Dataset Status */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/80 border border-blue-700 text-xs font-mono text-blue-100">
-          <Database className="w-3.5 h-3.5 text-yellow-300" />
-          <span>Data: <strong>{state.datasetMeta.accessionId}</strong></span>
-          <span className="text-blue-300">({state.samples.length} samples)</span>
+        {/* Center Pill: Active NCBI Dataset Selector Dropdown */}
+        <div
+          className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono border shadow-xs"
+          style={{ backgroundColor: 'rgba(181, 199, 235, 0.15)', borderColor: 'rgba(181, 199, 235, 0.3)', color: '#B5C7EB' }}
+        >
+          <Database className="w-3.5 h-3.5 text-cyan-300" />
+          <span className="font-semibold text-white">NCBI Dataset:</span>
+          <select
+            value={state.datasetMeta.accessionId}
+            onChange={(e) => onSelectNCBIDataset(e.target.value)}
+            className="bg-navy-950 text-white font-bold text-xs p-1 rounded border border-blue-700 cursor-pointer"
+          >
+            <option value="GSE63063">GSE63063 (Blood PBMCs - 100 samples)</option>
+            <option value="GSE1297">GSE1297 (Hippocampus - 31 samples)</option>
+            <option value="GSE5281">GSE5281 (Entorhinal Cortex - 161 samples)</option>
+          </select>
         </div>
 
         {/* Right Navigation & CTAs */}
@@ -47,28 +84,34 @@ export const Navbar: React.FC<NavbarProps> = ({
           {currentView === 'landing' ? (
             <>
               <button
-                onClick={() => setCurrentView('workspace')}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-900 hover:bg-blue-850 text-white border border-white/30 transition-colors"
+                onClick={() => handleNavigate('workspace')}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold border transition-all hover:scale-105"
+                style={{ backgroundColor: 'rgba(181, 199, 235, 0.25)', borderColor: '#B5C7EB', color: '#FFFAFA' }}
               >
-                <LayoutDashboard className="w-3.5 h-3.5 text-yellow-300" />
+                <LayoutDashboard className="w-3.5 h-3.5 text-cyan-300" />
                 <span>Open Studio</span>
               </button>
 
               <button
-                onClick={onTryExampleDataset}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-yellow-300 hover:bg-yellow-200 text-blue-950 font-bold transition-all shadow-md shadow-yellow-300/20"
+                onClick={() => {
+                  onSelectNCBIDataset(state.datasetMeta.accessionId);
+                  handleNavigate('workspace');
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition-all shadow-md hover:opacity-90"
+                style={{ backgroundColor: '#B5C7EB', color: '#0000FF' }}
               >
-                <Play className="w-3.5 h-3.5 fill-blue-950" />
-                <span>Try Demo Data</span>
+                <Play className="w-3.5 h-3.5 fill-[#0000FF]" />
+                <span>Train Model Now</span>
               </button>
             </>
           ) : (
             <button
-              onClick={() => setCurrentView('landing')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-900 hover:bg-blue-850 text-white border border-white/30 transition-colors"
+              onClick={() => handleNavigate('landing')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold border transition-all"
+              style={{ backgroundColor: 'rgba(181, 199, 235, 0.2)', borderColor: '#B5C7EB', color: '#FFFAFA' }}
             >
               <span>Back to Landing</span>
-              <ArrowRight className="w-3.5 h-3.5 text-blue-200" />
+              <ArrowRight className="w-3.5 h-3.5 text-cyan-300" />
             </button>
           )}
         </div>

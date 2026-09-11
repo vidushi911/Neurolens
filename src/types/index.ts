@@ -1,6 +1,13 @@
-// Core Data & ML Types for NeuroLens
+// Core Data & ML Types for NeuroLens (Research Use Only - Non-Diagnostic)
 
 export type DiagnosisLabel = 'Alzheimer\'s Disease' | 'Healthy Control';
+
+// Non-diagnostic display helper
+export function getNonDiagnosticLabel(label: DiagnosisLabel): string {
+  return label === 'Alzheimer\'s Disease'
+    ? 'AD-associated molecular profile'
+    : 'Control-associated molecular profile';
+}
 
 export interface GeneExpressionSample {
   sampleId: string;
@@ -34,6 +41,17 @@ export interface XGBoostParams {
   trainRatio: number; // e.g. 0.8
 }
 
+export interface ModelBenchmarkItem {
+  modelName: string;
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1Score: number;
+  rocAuc: number;
+  description: string;
+  isPrimary?: boolean;
+}
+
 export interface ClassificationMetrics {
   accuracy: number;
   precision: number;
@@ -53,6 +71,7 @@ export interface ClassificationMetrics {
     predictedLabel: DiagnosisLabel;
     adProbability: number;
   }>;
+  benchmarks?: ModelBenchmarkItem[];
 }
 
 export interface GeneSHAP {
@@ -68,7 +87,7 @@ export interface GeneSHAP {
 
 export interface LocalSHAPContribution {
   geneSymbol: string;
-  shapValue: number; // positive = pushes towards AD, negative = pushes towards Healthy
+  shapValue: number; // positive = pushes towards AD-associated profile, negative = pushes towards Control profile
   expressionValue: number;
   direction: 'Push AD' | 'Push Healthy';
 }
@@ -92,6 +111,23 @@ export interface EnrichrPathway {
   combinedScore: number;
   overlappingGenes: string[];
   totalPathwayGenes: number;
+}
+
+export interface ScientificReference {
+  id: string;
+  authors: string;
+  year: number;
+  title: string;
+  journal: string;
+  doi?: string;
+  url?: string;
+  relevance: string;
+}
+
+export interface ResearchLimitation {
+  title: string;
+  category: 'Platform' | 'Cohort Size' | 'Validation' | 'Non-Diagnostic';
+  description: string;
 }
 
 export interface AnalysisState {
