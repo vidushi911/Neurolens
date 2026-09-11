@@ -27,10 +27,16 @@ export const TargetAudienceSection: React.FC = () => {
 
   return (
     <section
-      className="py-20 px-4 sm:px-6 lg:px-8 border-b"
-      style={{ backgroundColor: 'rgba(181, 199, 235, 0.2)', borderColor: '#B5C7EB', color: '#0f172a' }}
+      className="relative py-24 px-4 sm:px-6 lg:px-8 border-b overflow-hidden"
+      style={{ backgroundColor: '#f8fafc', borderColor: '#B5C7EB' }}
     >
-      <div className="max-w-5xl mx-auto space-y-12">
+      {/* Background Gene & Brain Overlay */}
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center opacity-15 pointer-events-none"
+        style={{ backgroundImage: `url('/assets/gene_dna_background.jpg')` }}
+      />
+
+      <div className="relative z-10 max-w-5xl mx-auto space-y-12">
         <div className="text-center space-y-4 max-w-2xl mx-auto">
           <div
             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border font-semibold shadow-xs"
@@ -40,7 +46,7 @@ export const TargetAudienceSection: React.FC = () => {
             <span>Built for Researchers</span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl font-bold leading-tight" style={{ color: '#0000FF' }}>
+          <h2 className="text-3xl sm:text-4xl font-bold font-gwen leading-tight text-slate-900">
             Designed for Bench Scientists
           </h2>
 
@@ -56,17 +62,17 @@ export const TargetAudienceSection: React.FC = () => {
             return (
               <div
                 key={item.title}
-                className="p-6 rounded-2xl border bg-white transition-all duration-200 space-y-3 shadow-sm hover:shadow-md"
+                className="p-6 rounded-2xl border bg-white/95 backdrop-blur-md transition-all duration-300 space-y-3 shadow-sm hover:shadow-xl hover:-translate-y-1"
                 style={{ borderColor: '#B5C7EB' }}
               >
                 <div
-                  className="p-2.5 rounded-xl w-fit border"
-                  style={{ backgroundColor: 'rgba(181, 199, 235, 0.4)', borderColor: '#B5C7EB', color: '#0000FF' }}
+                  className="p-2.5 rounded-xl w-fit border shadow-xs"
+                  style={{ backgroundColor: '#0000FF', borderColor: '#0000FF', color: '#FFFAFA' }}
                 >
-                  <Icon className="w-5 h-5 text-[#0000FF]" />
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
-                <p className="text-xs leading-relaxed text-slate-600 font-medium">{item.desc}</p>
+                <p className="text-xs leading-relaxed text-slate-700 font-medium">{item.desc}</p>
               </div>
             );
           })}

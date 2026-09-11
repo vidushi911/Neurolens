@@ -163,21 +163,26 @@ export function App() {
           {/* Top Hero Section: Royal Blue with spotlight lens animation */}
           <HeroSection />
 
-          {/* As user scrolls down: Lighter backgrounds for high legibility & readability */}
+          {/* As user scrolls down: Lighter backgrounds with brain/gene artwork overlays for high legibility */}
           <WorkflowSection />
           <WhyExistsSection />
           <TargetAudienceSection />
 
-          {/* Bottom Transition CTA */}
+          {/* Bottom Transition CTA with Brain Network Overlay */}
           <section
-            className="py-20 text-center px-4 border-t shadow-xs"
-            style={{ backgroundColor: '#f8fafc', borderColor: '#B5C7EB' }}
+            className="relative py-24 text-center px-4 border-t overflow-hidden"
+            style={{ backgroundColor: '#FFFAFA', borderColor: '#B5C7EB' }}
           >
-            <div className="max-w-2xl mx-auto space-y-6">
-              <h2 className="text-3xl font-bold font-gwen text-[#0000FF]">
+            <div
+              className="absolute inset-0 z-0 bg-cover bg-center opacity-20 pointer-events-none"
+              style={{ backgroundImage: `url('/assets/brain_network_background.jpg')` }}
+            />
+
+            <div className="relative z-10 max-w-2xl mx-auto p-10 rounded-3xl bg-white/95 backdrop-blur-md border-2 shadow-xl space-y-6" style={{ borderColor: '#B5C7EB' }}>
+              <h2 className="text-3xl sm:text-4xl font-bold font-gwen text-[#0000FF]">
                 Understand your Alzheimer&apos;s models.
               </h2>
-              <p className="text-sm font-gwen text-slate-600 font-medium">
+              <p className="text-sm font-gwen text-slate-700 font-medium">
                 Launch the research studio with real NCBI GEO datasets (GSE63063, GSE1297, GSE5281) or drop in your experimental matrix.
               </p>
               <button
@@ -185,8 +190,7 @@ export function App() {
                   handleSelectNCBIDataset(state.datasetMeta.accessionId);
                   handleNavigateView('workspace');
                 }}
-                className="px-8 py-4 font-bold rounded-2xl text-sm shadow-lg transition-all transform hover:scale-[1.02] text-white"
-                style={{ backgroundColor: '#0000FF' }}
+                className="px-8 py-4 font-bold rounded-2xl text-sm shadow-xl transition-all transform hover:scale-[1.02] text-white bg-[#0000FF]"
               >
                 Launch Research Studio →
               </button>
