@@ -130,6 +130,58 @@ export interface ResearchLimitation {
   description: string;
 }
 
+// Molecular Docking & Drug Candidate Screening Types (RUO)
+export interface ProteinTarget {
+  geneSymbol: string;
+  proteinName: string;
+  pdbId: string;
+  uniprotId: string;
+  organism: string;
+  resolution: string;
+  activeSiteResidues: number[]; // Residue sequence numbers
+  activeSiteResidueNames: string[]; // e.g. ["Asp32", "Asp228"]
+  activeSiteDescription: string;
+  functionSummary: string;
+  biologicalRoleInAD: string;
+}
+
+export interface DrugCandidate {
+  id: string;
+  name: string;
+  smiles: string;
+  formula: string;
+  molecularWeight: number; // Da (<= 500)
+  logP: number; // Octanol-water partition (<= 5)
+  hbd: number; // H-bond donors (<= 5)
+  hba: number; // H-bond acceptors (<= 10)
+  rotatableBonds: number; // (<= 10)
+  tpsa: number; // Topological Polar Surface Area (Å²)
+  mechanismOfAction: string;
+  isStandardLibrary: boolean;
+}
+
+export type ValidationStage = 'Computational Hit' | 'Suggested for Experimental Validation' | 'Suggested for Clinical Evaluation';
+
+export interface DockingPoseResult {
+  candidateId: string;
+  candidateName: string;
+  smiles: string;
+  formula: string;
+  molecularWeight: number;
+  logP: number;
+  hbd: number;
+  hba: number;
+  rotatableBonds: number;
+  tpsa: number;
+  bindingEnergyKcal: number; // lower (more negative) = stronger binding
+  inhibitionConstantEst: string; // e.g., "140 nM"
+  lipinskiViolations: number;
+  lipinskiPass: boolean;
+  screeningScore: number; // 0-100 composite score
+  validationStage: ValidationStage;
+  activeSiteInteractions: string[]; // e.g., ["H-Bond to Asp32", "Pi-Stacking Tyr71"]
+}
+
 export interface AnalysisState {
   datasetMeta: DatasetMeta;
   samples: GeneExpressionSample[];

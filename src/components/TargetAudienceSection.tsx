@@ -1,5 +1,5 @@
 import React from 'react';
-import { Microscope, Brain, GraduationCap, FlaskConical, Heart } from 'lucide-react';
+import { Microscope, Brain, GraduationCap, FlaskConical, Users } from 'lucide-react';
 
 export const TargetAudienceSection: React.FC = () => {
   const audiences = [
@@ -16,42 +16,33 @@ export const TargetAudienceSection: React.FC = () => {
     {
       icon: FlaskConical,
       title: 'Biomedical Scientists',
-      desc: 'Perform rapid no-code hypothesis generation, combining XGBoost biomarker prioritization with Enrichr.'
+      desc: 'Perform rapid no-code hypothesis generation, combining machine learning (XGBoost) with biological pathway enrichment (Enrichr).'
     },
     {
       icon: GraduationCap,
       title: 'Students & Educators',
-      desc: 'Learn explainable AI concepts (SHAP) and pathway enrichment through interactive visual tools.'
+      desc: 'Learn explainable AI concepts (SHAP feature attribution) and 3D molecular docking through interactive visual tools.'
     }
   ];
 
   return (
     <section
-      className="relative py-24 px-4 sm:px-6 lg:px-8 border-b overflow-hidden"
-      style={{ backgroundColor: '#f8fafc', borderColor: '#B5C7EB' }}
+      className="relative py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200 overflow-hidden font-sans"
+      style={{ backgroundColor: '#F5F8FC' }}
     >
-      {/* Background Gene & Brain Overlay */}
-      <div
-        className="absolute inset-0 z-0 bg-cover bg-center opacity-15 pointer-events-none"
-        style={{ backgroundImage: `url('/assets/gene_dna_background.jpg')` }}
-      />
-
       <div className="relative z-10 max-w-5xl mx-auto space-y-12">
         <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <div
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border font-semibold shadow-xs"
-            style={{ backgroundColor: '#ffffff', borderColor: '#B5C7EB', color: '#0000FF' }}
-          >
-            <Heart className="w-3.5 h-3.5 fill-[#0000FF] text-[#0000FF]" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border font-bold bg-sky-100 text-sky-900 border-sky-200">
+            <Users className="w-3.5 h-3.5 text-sky-700" />
             <span>Built for Researchers</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl font-bold font-gwen leading-tight text-slate-900">
-            Designed for Bench Scientists
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+            Designed for Bench Scientists &amp; Drug Discovery Teams
           </h2>
 
-          <p className="text-base font-medium italic text-slate-700">
-            &ldquo;You shouldn&apos;t need to write Python to explore what a machine-learning model learned from your gene-expression data.&rdquo;
+          <p className="text-sm font-normal italic text-slate-600">
+            &ldquo;You shouldn&apos;t need to write custom Python scripts just to understand what a machine-learning model learned from your gene-expression data.&rdquo;
           </p>
         </div>
 
@@ -62,17 +53,13 @@ export const TargetAudienceSection: React.FC = () => {
             return (
               <div
                 key={item.title}
-                className="p-6 rounded-2xl border bg-white/95 backdrop-blur-md transition-all duration-300 space-y-3 shadow-sm hover:shadow-xl hover:-translate-y-1"
-                style={{ borderColor: '#B5C7EB' }}
+                className="p-6 rounded-2xl border border-slate-200 bg-white transition-all duration-300 space-y-3 shadow-2xs hover:border-sky-300 hover:shadow-xs"
               >
-                <div
-                  className="p-2.5 rounded-xl w-fit border shadow-xs"
-                  style={{ backgroundColor: '#0000FF', borderColor: '#0000FF', color: '#FFFAFA' }}
-                >
+                <div className="p-2.5 rounded-xl w-fit bg-[#3B5DBF] text-white">
                   <Icon className="w-5 h-5 text-white" />
                 </div>
                 <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
-                <p className="text-xs leading-relaxed text-slate-700 font-medium">{item.desc}</p>
+                <p className="text-xs leading-relaxed text-slate-600 font-normal">{item.desc}</p>
               </div>
             );
           })}

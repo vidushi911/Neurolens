@@ -11,6 +11,7 @@ import { HeroSection } from './components/HeroSection';
 import { WorkflowSection } from './components/WorkflowSection';
 import { WhyExistsSection } from './components/WhyExistsSection';
 import { TargetAudienceSection } from './components/TargetAudienceSection';
+import { FutureScopeSection } from './components/FutureScopeSection';
 
 import { WorkspaceNav, WorkspaceTab } from './components/workspace/WorkspaceNav';
 import { OverviewTab } from './components/workspace/OverviewTab';
@@ -18,6 +19,7 @@ import { DatasetTab } from './components/workspace/DatasetTab';
 import { AnalyzeTab } from './components/workspace/AnalyzeTab';
 import { ExplainTab } from './components/workspace/ExplainTab';
 import { PathwaysTab } from './components/workspace/PathwaysTab';
+import { DockingTab } from './components/workspace/DockingTab';
 import { ResultsTab } from './components/workspace/ResultsTab';
 import { DownloadTab } from './components/workspace/DownloadTab';
 
@@ -144,8 +146,19 @@ export function App() {
 
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
+  const handleSearchSubmit = (query: string) => {
+    const cleanQuery = query.trim().toUpperCase();
+    if (!cleanQuery) return;
+
+    // Check if query matches a known gene symbol
+    const matchedGene = state.genes.find(g => g.toUpperCase() === cleanQuery) || cleanQuery;
+    setInspectedGene(matchedGene);
+    setActiveTab('explain');
+    handleNavigateView('workspace');
+  };
+
   return (
-    <div className="min-h-screen flex flex-col font-sans selection:bg-[#B5C7EB] selection:text-[#0000FF]">
+    <div className="min-h-screen flex flex-col font-sans selection:bg-sky-200 selection:text-slate-900 bg-[#F5F8FC]">
       {/* Research Use Only Persistent Disclaimer Banner */}
       <ScientificDisclaimerBanner />
 
@@ -155,34 +168,32 @@ export function App() {
         setCurrentView={(v) => handleNavigateView(v)}
         onSelectNCBIDataset={handleSelectNCBIDataset}
         state={state}
+        onSearchSubmit={handleSearchSubmit}
       />
 
       {/* LANDING PAGE VIEW */}
       {currentView === 'landing' && (
         <main className="flex-1">
-          {/* Top Hero Section: Royal Blue with spotlight lens animation */}
+          {/* Top Hero Section */}
           <HeroSection />
 
-          {/* As user scrolls down: Lighter backgrounds with brain/gene artwork overlays for high legibility */}
+          {/* Workflow, Why Exists & Target Audience Sections */}
           <WorkflowSection />
           <WhyExistsSection />
           <TargetAudienceSection />
 
-          {/* Bottom Transition CTA with Brain Network Overlay */}
-          <section
-            className="relative py-24 text-center px-4 border-t overflow-hidden"
-            style={{ backgroundColor: '#FFFAFA', borderColor: '#B5C7EB' }}
-          >
-            <div
-              className="absolute inset-0 z-0 bg-cover bg-center opacity-20 pointer-events-none"
-              style={{ backgroundImage: `url('/assets/brain_network_background.jpg')` }}
-            />
+          {/* PART 4 — Future Scope Section */}
+          <FutureScopeSection />
 
-            <div className="relative z-10 max-w-2xl mx-auto p-10 rounded-3xl bg-white/95 backdrop-blur-md border-2 shadow-xl space-y-6" style={{ borderColor: '#B5C7EB' }}>
-              <h2 className="text-3xl sm:text-4xl font-bold font-gwen text-[#0000FF]">
-                Understand your Alzheimer&apos;s models.
+          {/* Bottom Transition CTA */}
+          <section
+            className="relative py-20 text-center px-4 border-t border-slate-200 overflow-hidden bg-white"
+          >
+            <div className="relative z-10 max-w-2xl mx-auto p-8 sm:p-10 rounded-3xl bg-[#F5F8FC] border border-slate-200 shadow-2xs space-y-6">
+              <h2 className="text-3xl sm:text-4xl font-bold font-sans text-slate-900 tracking-tight">
+                Explore Alzheimer&apos;s Molecular Profiles.
               </h2>
-              <p className="text-sm font-gwen text-slate-700 font-medium">
+              <p className="text-sm font-sans text-slate-600 font-normal leading-relaxed">
                 Launch the research studio with real NCBI GEO datasets (GSE63063, GSE1297, GSE5281) or drop in your experimental matrix.
               </p>
               <button
@@ -190,7 +201,7 @@ export function App() {
                   handleSelectNCBIDataset(state.datasetMeta.accessionId);
                   handleNavigateView('workspace');
                 }}
-                className="px-8 py-4 font-bold rounded-2xl text-sm shadow-xl transition-all transform hover:scale-[1.02] text-white bg-[#0000FF]"
+                className="px-8 py-4 font-bold rounded-2xl text-sm shadow-sm transition-all hover:opacity-95 text-white bg-[#3B5DBF] cursor-pointer"
               >
                 Launch Research Studio →
               </button>
@@ -246,6 +257,7 @@ export function App() {
                 onOpenGeneModal={(symbol) => setInspectedGene(symbol)}
                 myPathwayGenes={myPathwayGenes}
                 setMyPathwayGenes={setMyPathwayGenes}
+                setActiveTab={setActiveTab}
               />
             )}
 
@@ -255,6 +267,13 @@ export function App() {
                 onUpdateState={handleUpdateState}
                 onOpenGeneModal={(symbol) => setInspectedGene(symbol)}
                 myPathwayGenes={myPathwayGenes}
+              />
+            )}
+
+            {activeTab === 'docking' && (
+              <DockingTab
+                state={state}
+                onOpenGeneModal={(symbol) => setInspectedGene(symbol)}
               />
             )}
 

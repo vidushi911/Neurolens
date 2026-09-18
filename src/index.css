@@ -4,21 +4,20 @@
 
 @layer base {
   :root {
-    --color-landing-bg: #FFFAFA;
-    --color-landing-accent: #B5C7EB;
-    --color-landing-[#0000FF]: #0000FF;
-    --color-bg-workspace: #f8fafc;
+    --color-landing-bg: #F5F8FC;
+    --color-landing-accent: #3B5DBF;
+    --color-bg-workspace: #F8FAFC;
   }
 
   body {
-    background-color: #FFFAFA;
+    background-color: #F5F8FC;
     color: #0f172a;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
   }
 
   .font-gwen {
-    font-family: 'Gwen', 'Gwen Variable', 'Playfair Display', Georgia, serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
   .font-mono-num {
@@ -27,54 +26,25 @@
   }
 }
 
-/* Landing Page Three-Color System (#FFFAFA, #B5C7EB, #0000FF) */
+/* Scientific Muted Blue Palette Token System */
 .bg-landing-light {
-  background-color: #FFFAFA !important;
+  background-color: #F5F8FC !important;
 }
 
 .bg-landing-periwinkle {
-  background-color: #B5C7EB !important;
+  background-color: #D6EFFA !important;
 }
 
 .bg-landing-royal {
-  background-color: #0000FF !important;
+  background-color: #3B5DBF !important;
 }
 
 .text-royal {
-  color: #0000FF !important;
-}
-
-.text-[#B5C7EB] {
-  color: #3b5998 !important;
+  color: #3B5DBF !important;
 }
 
 .border-royal {
-  border-color: rgba(0, 0, 255, 0.3) !important;
-}
-
-.border-periwinkle {
-  border-color: #B5C7EB !important;
-}
-
-/* Three-Color Hero Card System */
-.landing-card-light {
-  background-color: #ffffff;
-  border: 2px solid #B5C7EB;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 255, 0.08);
-  border-radius: 1.25rem;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.landing-card-light:hover {
-  border-color: #0000FF;
-  transform: translateY(-2px);
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 255, 0.15);
-}
-
-.landing-card-periwinkle {
-  background-color: rgba(181, 199, 235, 0.35);
-  border: 1px solid #B5C7EB;
-  border-radius: 1.25rem;
+  border-color: rgba(59, 93, 191, 0.3) !important;
 }
 
 /* Custom Scrollbar for Scientific Tables & Workspace */
@@ -84,21 +54,21 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(181, 199, 235, 0.2);
+  background: rgba(59, 93, 191, 0.08);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0000FF;
+  background: #3B5DBF;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00008B;
+  background: #2C489D;
 }
 
-/* Cute hand-drawn grid background on bright light background */
+/* Subtle grid pattern */
 .doodle-grid-pattern-light {
-  background-image: radial-gradient(rgba(0, 0, 255, 0.12) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(rgba(59, 93, 191, 0.1) 1.5px, transparent 1.5px);
   background-size: 28px 28px;
 }
 
@@ -119,5 +89,5 @@
 .heatmap-cell:hover {
   transform: scale(1.2);
   z-index: 20;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
