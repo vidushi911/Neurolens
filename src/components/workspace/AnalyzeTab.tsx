@@ -246,8 +246,17 @@ export const AnalyzeTab: React.FC<AnalyzeTabProps> = ({
                 {/* Primary Result Statement */}
                 <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-2">
                   <div className="text-sm font-bold text-slate-900">
-                    This sample displays an{' '}
-                    <span className="text-cyan-700 underline font-extrabold">AD-associated molecular expression profile</span>.
+                    {currentPrediction.predictedLabel === "Alzheimer's Disease" ? (
+                      <>
+                        This sample displays an{' '}
+                        <span className="text-cyan-700 underline font-extrabold">AD-associated molecular expression profile</span>.
+                      </>
+                    ) : (
+                      <>
+                        This sample displays a{' '}
+                        <span className="text-emerald-700 underline font-extrabold">Control-associated molecular expression profile</span>, consistent with healthy gene-expression patterns.
+                      </>
+                    )}
                   </div>
                   <div className="text-xs text-slate-600 font-mono">
                     Model-estimated probability score: <strong>{(currentPrediction.adProbability * 100).toFixed(1)}% AD Profile</strong>
@@ -379,9 +388,14 @@ export const AnalyzeTab: React.FC<AnalyzeTabProps> = ({
           {/* Model Comparison Benchmark Table */}
           {metrics.benchmarks && (
             <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h4 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
-                Model Comparison Benchmark (XGBoost vs Traditional ML)
-              </h4>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h4 className="text-sm font-bold text-slate-900">
+                  Model Comparison Benchmark (XGBoost vs Traditional ML)
+                </h4>
+                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                  Illustrative benchmark — for demonstration purposes
+                </span>
+              </div>
 
               <div className="border border-slate-200 rounded-xl overflow-x-auto text-xs font-mono">
                 <table className="w-full text-left border-collapse">

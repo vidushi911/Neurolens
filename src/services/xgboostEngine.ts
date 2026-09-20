@@ -112,7 +112,7 @@ export function trainXGBoostModel(
     const avgHeight = (rocCurveData[i].tpr + rocCurveData[i - 1].tpr) / 2;
     rocAuc += width * avgHeight;
   }
-  rocAuc = Number(Math.min(0.999, Math.max(0.50, 1.0 - Math.abs(rocAuc - 0.92))).toFixed(3));
+  rocAuc = Number(rocAuc.toFixed(3));
 
   // Model comparison benchmarks
   const benchmarks: ModelBenchmarkItem[] = [
