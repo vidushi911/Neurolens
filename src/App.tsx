@@ -194,7 +194,7 @@ export function App() {
                 Explore Alzheimer&apos;s Molecular Profiles.
               </h2>
               <p className="text-sm font-sans text-slate-600 font-normal leading-relaxed">
-                Launch the research studio with real NCBI GEO datasets (GSE63063, GSE1297, GSE5281) or drop in your experimental matrix.
+                Launch NeuroLens Analytics with real NCBI GEO datasets (GSE63063, GSE1297, GSE5281) or drop in your experimental matrix.
               </p>
               <button
                 onClick={() => {
@@ -203,7 +203,7 @@ export function App() {
                 }}
                 className="px-8 py-4 font-bold rounded-2xl text-sm shadow-sm transition-all hover:opacity-95 text-white bg-[#3B5DBF] cursor-pointer"
               >
-                Launch Research Studio →
+                Open Workbench →
               </button>
             </div>
           </section>

@@ -69,7 +69,7 @@ export const WorkspaceNav: React.FC<WorkspaceNavProps> = ({
             </div>
             <div className="truncate">
               <span className="text-sm font-bold text-slate-900 tracking-tight block leading-none truncate">NeuroLens</span>
-              <span className="text-[10px] text-slate-500 font-mono truncate block">Research Studio</span>
+              <span className="text-[10px] text-slate-500 font-mono truncate block">Analytics</span>
             </div>
           </button>
         )}

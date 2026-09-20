@@ -138,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl font-bold transition-all shadow-sm hover:opacity-95 bg-white text-[#3B5DBF] cursor-pointer"
             >
               <Play className="w-3.5 h-3.5 fill-[#3B5DBF]" />
-              <span>Launch Studio</span>
+              <span>Open Workbench</span>
             </button>
           ) : (
             <button

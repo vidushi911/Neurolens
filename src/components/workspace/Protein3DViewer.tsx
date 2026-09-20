@@ -57,10 +57,10 @@ export const Protein3DViewer: React.FC<Protein3DViewerProps> = ({
         let resolvedPdbId = target.pdbId || '';
 
         // STEP 1 & 2: Scoped UniProt REST API Search (gene_exact)
-        console.log(`[UniProt Search] Querying exact gene: ${target.geneSymbol} (Organism: 9606, Reviewed: true)...`);
+        console.log(`[UniProt Search] Querying gene_exact:${target.geneSymbol}...`);
         try {
           setLoadingStatus(`Querying UniProt REST API for gene_exact:${target.geneSymbol}...`);
-          const uniprotUrl = `https://rest.uniprot.org/uniprotkb/search?query=gene_exact:${encodeURIComponent(target.geneSymbol)}+AND+organism_id:9606+AND+reviewed:true&format=json`;
+          const uniprotUrl = `https://rest.uniprot.org/uniprotkb/search?query=gene_exact:${encodeURIComponent(target.geneSymbol)}+AND+organism_id:9606+AND+reviewed:true&format=json&fields=accession,gene_names,xref_pdb`;
           const uniprotRes = await fetch(uniprotUrl);
           
           if (uniprotRes.ok) {
@@ -72,7 +72,7 @@ export const Protein3DViewer: React.FC<Protein3DViewerProps> = ({
             } else {
               const firstEntry = results[0];
               resolvedAccession = firstEntry.primaryAccession || resolvedAccession;
-              console.log(`[UniProt Search] Query succeeded, returned accession: ${resolvedAccession} for gene ${target.geneSymbol}`);
+              console.log(`[UniProt Search] Succeeded. Accession: ${resolvedAccession}`);
               
               // Extract experimental PDB cross-references
               const pdbRefs = firstEntry.uniProtKBCrossReferences?.filter(
@@ -81,22 +81,17 @@ export const Protein3DViewer: React.FC<Protein3DViewerProps> = ({
 
               if (pdbRefs && pdbRefs.length > 0) {
                 resolvedPdbId = pdbRefs[0].id;
-                console.log(`[UniProt Search] Found ${pdbRefs.length} PDB cross-references for accession ${resolvedAccession}. Selected: ${resolvedPdbId}`);
-              } else {
-                console.warn(`[UniProt Search] Query succeeded, returned accession ${resolvedAccession}, but PDB cross-reference lookup returned zero experimental PDB entries.`);
               }
             }
-          } else {
-            console.warn(`[UniProt Search] UniProt API call failed with status [${uniprotRes.status}]`);
           }
         } catch (uniprotErr) {
           console.warn('[UniProt Search] Exception during UniProt API fetch:', uniprotErr);
         }
 
-        // STEP 3A: Attempt Experimental Structure Fetch from RCSB PDB
+        // STEP 3: Attempt Experimental Structure Fetch from RCSB PDB
         if (resolvedPdbId) {
           try {
-            console.log(`[RCSB PDB] Attempting fetch for PDB ID: ${resolvedPdbId}...`);
+            console.log(`[RCSB PDB] Fetching PDB ${resolvedPdbId}...`);
             setLoadingStatus(`Fetching experimental structure ${resolvedPdbId} from RCSB PDB...`);
             const rcsbUrl = `https://files.rcsb.org/download/${resolvedPdbId}.pdb`;
             const rcsbRes = await fetch(rcsbUrl);
@@ -106,22 +101,17 @@ export const Protein3DViewer: React.FC<Protein3DViewerProps> = ({
               if (rcsbText && (rcsbText.includes('ATOM') || rcsbText.includes('HEADER'))) {
                 fetchedPdbText = rcsbText;
                 sourceName = `RCSB PDB (${resolvedPdbId})`;
-                console.log(`[RCSB PDB] Successfully fetched ${rcsbText.length} bytes for PDB ID ${resolvedPdbId}`);
-              } else {
-                console.warn(`[RCSB PDB] Fetch returned non-PDB content or empty body for PDB ID ${resolvedPdbId}`);
               }
-            } else {
-              console.warn(`[RCSB PDB] Fetch failed for PDB ID ${resolvedPdbId} with status [${rcsbRes.status}]`);
             }
           } catch (rcsbErr) {
             console.warn(`[RCSB PDB] Exception while fetching PDB ID ${resolvedPdbId}:`, rcsbErr);
           }
         }
 
-        // STEP 3B & STEP 4: Fallback to AlphaFold DB API if experimental PDB was not retrieved
+        // STEP 4: Fallback to AlphaFold DB API if experimental PDB was not retrieved
         if (!fetchedPdbText && resolvedAccession) {
           try {
-            console.log(`[AlphaFold API] Attempting prediction query for accession: ${resolvedAccession}...`);
+            console.log(`[AlphaFold API] Querying prediction for ${resolvedAccession}...`);
             setLoadingStatus(`Fetching AlphaFold structure prediction for accession ${resolvedAccession}...`);
             const afUrl = `https://alphafold.ebi.ac.uk/api/prediction/${resolvedAccession}`;
             const afRes = await fetch(afUrl);
@@ -130,7 +120,6 @@ export const Protein3DViewer: React.FC<Protein3DViewerProps> = ({
               const afData = await afRes.json();
               if (afData && afData.length > 0 && afData[0].pdbUrl) {
                 const afPdbUrl = afData[0].pdbUrl;
-                console.log(`[AlphaFold API] Query succeeded. Accession ${resolvedAccession} mapped to PDB URL: ${afPdbUrl}`);
                 
                 const afPdbRes = await fetch(afPdbUrl);
                 if (afPdbRes.ok) {
@@ -138,27 +127,17 @@ export const Protein3DViewer: React.FC<Protein3DViewerProps> = ({
                   if (afText && (afText.includes('ATOM') || afText.includes('HEADER'))) {
                     fetchedPdbText = afText;
                     sourceName = `AlphaFold DB (${resolvedAccession})`;
-                    console.log(`[AlphaFold API] Successfully downloaded AlphaFold structure (${afText.length} bytes) for ${resolvedAccession}`);
-                  } else {
-                    console.warn(`[AlphaFold API] Downloaded structure for ${resolvedAccession} but content was empty or malformed.`);
                   }
-                } else {
-                  console.warn(`[AlphaFold API] Structure file download from ${afPdbUrl} failed with status [${afPdbRes.status}]`);
                 }
-              } else {
-                console.warn(`[AlphaFold API] API call succeeded for ${resolvedAccession} but returned empty/malformed prediction array.`);
               }
-            } else {
-              console.warn(`[AlphaFold API] API call for accession ${resolvedAccession} failed with status [${afRes.status}]`);
             }
           } catch (afErr) {
             console.warn(`[AlphaFold API] Exception during AlphaFold query for accession ${resolvedAccession}:`, afErr);
           }
         }
 
-        // STEP 3C: High-resolution structural fallback generator if network calls were blocked
+        // Fallback to generator
         if (!fetchedPdbText) {
-          console.warn(`[3DViewer Fallback] Network structure calls failed for ${target.geneSymbol}. Utilizing fallback model...`);
           setLoadingStatus(`Generating 3D structural model for ${target.geneSymbol}...`);
           fetchedPdbText = generateFallbackProteinPdb(target);
           sourceName = `3D Structural Model (${resolvedPdbId || target.pdbId || '3H11'})`;
@@ -166,8 +145,8 @@ export const Protein3DViewer: React.FC<Protein3DViewerProps> = ({
 
         if (!isMounted) return;
 
-        // STEP 4 Log raw content preview
-        console.log(`[3DViewer] Final loaded structure for ${target.geneSymbol} via ${sourceName} (${fetchedPdbText.length} bytes). Preview:`, fetchedPdbText.slice(0, 100).replace(/\n/g, ' '));
+        // STEP 5 Log raw content preview
+        console.log(`[3DViewer] Successfully loaded PDB content (${fetchedPdbText.length} bytes, preview: ${fetchedPdbText.slice(0, 80).replace(/\n/g, ' ')})`);
         setStructureSource(sourceName);
 
         // STEP 5: Initialize 3Dmol viewer in container with explicit height
